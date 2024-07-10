@@ -8,7 +8,7 @@ To deploy the system locally, follow those step:
 
 Set up environment
 ------------------
-Copy env.default to .env inside the root directory of the repository (OpenSpace-Hub folder).
+Copy env.default to .env inside the root directory of the repository (UI-WebRTC folder).
 ```
 cp .env.default .env
 ```
