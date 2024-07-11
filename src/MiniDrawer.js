@@ -16,8 +16,6 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
 
 import InputBase from '@mui/material/InputBase';
 import Badge from '@mui/material/Badge';
@@ -30,7 +28,7 @@ import MoreIcon from '@mui/icons-material/MoreVert';
 
 
 import Avatar from '@mui/material/Avatar';
-import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 
 
 
@@ -38,6 +36,8 @@ import StorageIcon from '@mui/icons-material/Storage';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import CheckboxListSecondary from './Statistics';
+import { deleteUser, signOut } from 'firebase/auth';
+import { auth } from './firebase';
 
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
@@ -149,6 +149,8 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 export default function MiniDrawer() {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
+  const [profileOpen, setProfileOpen] = React.useState(false);
+  const [profileInfo, setProfileInfo] = React.useState({ name: auth.currentUser.displayName, email: auth.currentUser.email });
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -169,6 +171,19 @@ export default function MiniDrawer() {
     setAnchorEl(event.currentTarget);
   };
 
+  const handleProfile = () => {
+    setProfileOpen(true);
+    setAnchorEl(null);
+  }
+
+  const handleLogout = () => {
+    signOut(auth).then(() => {
+      console.log("User signed out");
+    }).catch((error) => {
+      console.error(error);
+    });
+  }
+
   const handleMobileMenuClose = () => {
     setMobileMoreAnchorEl(null);
   };
@@ -180,6 +195,13 @@ export default function MiniDrawer() {
 
   const handleMobileMenuOpen = (event) => {
     setMobileMoreAnchorEl(event.currentTarget);
+  };
+
+  const handleDeleteAccount = () => {
+    let text = "Do you want to delete your profile? This action cannot be undone.";
+    if (window.confirm(text) == true) {
+      deleteUser(auth.currentUser);
+    }
   };
 
   const menuId = 'primary-search-account-menu';
@@ -199,8 +221,8 @@ export default function MiniDrawer() {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
-      <MenuItem onClick={handleMenuClose}>My account</MenuItem>
+      <MenuItem onClick={handleProfile}>Profile</MenuItem>
+      <MenuItem onClick={handleLogout}>Logout</MenuItem>
     </Menu>
   );
 
@@ -255,6 +277,22 @@ export default function MiniDrawer() {
         <p>Profile</p>
       </MenuItem>
     </Menu>
+  );
+
+  const Profile = () => (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        Profile Information
+      </Typography>
+
+      <Box>
+        <Typography variant="body1">Name: {profileInfo.name}</Typography>
+        <Typography variant="body1">Email: {profileInfo.email}</Typography>
+        <Button variant="contained" color="primary" onClick={handleDeleteAccount}>
+          Delete Account
+        </Button>
+      </Box>
+    </Box>
   );
 
 
@@ -393,7 +431,8 @@ export default function MiniDrawer() {
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <DrawerHeader />
-        <CheckboxListSecondary/>
+        {profileOpen ? <Profile /> : <CheckboxListSecondary />}
+
       </Box>
     </Box>
   );
