@@ -177,11 +177,11 @@ export default function MiniDrawer() {
   }
 
   const handleLogout = () => {
-    signOut(auth).then(() => {
-      console.log("User signed out");
-    }).catch((error) => {
+    try {
+      signOut(auth)
+    } catch (error) {
       console.error(error);
-    });
+    }
   }
 
   const handleMobileMenuClose = () => {
@@ -291,6 +291,7 @@ export default function MiniDrawer() {
         <Button variant="contained" color="primary" onClick={handleDeleteAccount}>
           Delete Account
         </Button>
+        <Button variant="contained" color="danger" onClick={()=>{setProfileOpen(false)}} > Close </Button>
       </Box>
     </Box>
   );

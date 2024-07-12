@@ -21,7 +21,6 @@ const App = () => {
         setAuthenticated(true);
       } else {
         setAuthenticated(false);
-        console.log("User is not logged in");
       }
     });
 
