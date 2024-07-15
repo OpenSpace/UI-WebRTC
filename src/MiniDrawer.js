@@ -280,18 +280,34 @@ export default function MiniDrawer() {
   );
 
   const Profile = () => (
-    <Box>
+    <Box sx={{
+      margin: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 2,
+      maxWidth: 400,
+      padding: 2,
+      border: '1px solid #ccc',
+      borderRadius: 2,
+      marginTop: 20,
+    }}
+    >
       <Typography variant="h6" gutterBottom>
         Profile Information
       </Typography>
-
-      <Box>
-        <Typography variant="body1">Name: {profileInfo.name}</Typography>
-        <Typography variant="body1">Email: {profileInfo.email}</Typography>
-        <Button variant="contained" color="primary" onClick={handleDeleteAccount}>
+      <Typography>Name: {profileInfo.name}</Typography>
+      <Typography>Email: {profileInfo.email}</Typography>
+      <Box
+        sx={{
+          display: 'flex',
+        }}
+      >
+        <Button variant="contained" color="error" sx={{ mr: 2 }} onClick={handleDeleteAccount}>
           Delete Account
         </Button>
-        <Button variant="contained" color="danger" onClick={()=>{setProfileOpen(false)}} > Close </Button>
+        <Button variant="contained" color="primary" onClick={() => { setProfileOpen(false) }}>
+          Close
+        </Button>
       </Box>
     </Box>
   );
@@ -314,9 +330,9 @@ export default function MiniDrawer() {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
+          <Button variant="h6" noWrap component="div" onClick={() => { setProfileOpen(false) }}>
             Web RTC - OpenSpace
-          </Typography>
+          </Button>
           <Search>
             <SearchIconWrapper>
               <SearchIcon />
