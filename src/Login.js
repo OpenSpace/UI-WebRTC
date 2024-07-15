@@ -13,10 +13,6 @@ const Login = ({ onLogin }) => {
       provider: new GithubAuthProvider(),
       credentialFromError: GithubAuthProvider.credentialFromError,
     },
-    facebook: {
-      provider: new FacebookAuthProvider(),
-      credentialFromError: FacebookAuthProvider.credentialFromError,
-    },
     twitter: {
       provider: new TwitterAuthProvider(),
       credentialFromError: TwitterAuthProvider.credentialFromError,
@@ -53,7 +49,23 @@ const Login = ({ onLogin }) => {
 
   return (
     <Container maxWidth="xs">
-      <Box sx={{ marginTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box sx={{ 
+        marginTop: 30, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        gap: 2, 
+        maxWidth: 400,
+        padding: 2,
+        border: '1px solid #ccc',
+        borderRadius: 2,
+        }}>
+        <Box
+          component="img"
+          src="openspace-black-transparent.png"
+          alt="OpenSpace Logo"
+          sx={{ width: '120px', height: 'auto', mb: 2 }}
+        />
         <Typography component="h1" variant="h5">
           Sign in
         </Typography>

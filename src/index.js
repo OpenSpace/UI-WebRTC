@@ -1,28 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client'; // Import createRoot from react-dom/client
 import './index.css';
 import MiniDrawer from './MiniDrawer';
 import reportWebVitals from './reportWebVitals';
 import Login from './Login';
-// // Login Component
-// const Login = ({ onLogin }) => {
-//   const [username, setUsername] = useState('');
-//   const [password, setPassword] = useState('');
-
-//   const handleLogin = () => {
-//     // Perform authentication logic here (e.g., API call)
-//     // For simplicity, let's assume login is successful
-//     onLogin();
-//   };
-
-//   return (
-//     <div className="login-form">
-//       <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
-//       <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-//       <button onClick={handleLogin}>Login</button>
-//     </div>
-//   );
-// };
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './firebase';
 
 const App = () => {
   const [authenticated, setAuthenticated] = useState(false);
@@ -31,6 +14,18 @@ const App = () => {
     // Simulated authentication success
     setAuthenticated(true);
   };
+
+  useEffect(() => {
+    const isloggedin = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setAuthenticated(true);
+      } else {
+        setAuthenticated(false);
+      }
+    });
+
+    return () => isloggedin();
+  }, []);
 
   return (
     <React.StrictMode>
