@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client'; // Import createRoot from react-dom/client
 import './index.css';
 import MiniDrawer from './MiniDrawer';
 import reportWebVitals from './reportWebVitals';
 import Login from './Login';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './firebase';
 
 const App = () => {
   const [authenticated, setAuthenticated] = useState(false);
@@ -12,6 +14,18 @@ const App = () => {
     // Simulated authentication success
     setAuthenticated(true);
   };
+
+  useEffect(() => {
+    const isloggedin = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setAuthenticated(true);
+      } else {
+        setAuthenticated(false);
+      }
+    });
+
+    return () => isloggedin();
+  }, []);
 
   return (
     <React.StrictMode>
