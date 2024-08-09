@@ -37,7 +37,8 @@ import Stack from '@mui/material/Stack';
 import StorageIcon from '@mui/icons-material/Storage';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
-import CheckboxListSecondary from './Statistics';
+import Resources from './Resources';
+import OpenSpaceView from './OpenSpaceView';
 
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
@@ -146,9 +147,15 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
   }),
 );
 
-export default function MiniDrawer() {
+
+export default function App() {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
+
+
+  const [selectedMenuItem, setSelectedMenuItem] = React.useState('Servers');
+  const handleMenuItemClick = (text) => setSelectedMenuItem(text);
+
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -343,7 +350,12 @@ export default function MiniDrawer() {
         <Divider />
         <List>
           {['OpenSpace', 'Servers', 'Statistics', 'Reports'].map((text, index) => (
-            <ListItem key={text} disablePadding sx={{ display: 'block' }}>
+            <ListItem 
+              key={text}
+              disablePadding
+              sx={{ display: 'block' }}
+              onClick={() => handleMenuItemClick(text)}
+            >
               <ListItemButton
                 sx={{
                   minHeight: 48,
@@ -393,7 +405,12 @@ export default function MiniDrawer() {
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <DrawerHeader />
-        <CheckboxListSecondary/>
+        {selectedMenuItem === 'Servers' && <Resources />}
+        {selectedMenuItem === 'OpenSpace' && <OpenSpaceView selectedServer={selectedMenuItem} />}
+        {/* {selectedMenuItem === 'OpenSpace' && <OpenSpaceView selectedServer={"Server 1"}/>} */}
+
+          {console.log(selectedMenuItem)}
+        {/* <Resources/> */}
       </Box>
     </Box>
   );

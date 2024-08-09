@@ -15,7 +15,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Typography from '@mui/material/Typography';
 
-export default function CheckboxListSecondary() {
+export default function Resources() {
   const [checked, setChecked] = React.useState([]);
   const [confirmExitServer, setConfirmExitServer] = React.useState(null); // Track which server's exit is confirmed
   const [dialogOpen, setDialogOpen] = React.useState(false); // Dialog open/close state
