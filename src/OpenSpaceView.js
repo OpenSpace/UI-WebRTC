@@ -41,7 +41,7 @@ const OpenSpaceView = ({ selectedServer }) => {
   };
 
   return (
-    <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
+    <Box sx={{ width: '100%', height: '100%', position: 'relative', color: '#c2c2c2' }}>
       <>Selected Server: {selectedServer}</>
       <iframe 
         ref={iframeRef}

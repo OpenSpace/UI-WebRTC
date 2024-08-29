@@ -12,16 +12,15 @@ module.exports = {
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env', '@babel/preset-react'],
-          },
-        },
+        use: 'babel-loader',
       },
       {
-        test: /\.css$/,
+        test: /\.css$/,  // Rule for processing CSS files
         use: ['style-loader', 'css-loader'],
+      },
+      {
+        test: /\.(png|jpg|jpeg|gif)$/i,  // Rule for processing image files
+        type: 'asset/resource',
       },
     ],
   },
