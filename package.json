@@ -1,5 +1,5 @@
 {
-  "name": "ui-webrtc_page",
+  "name": "ui-webrtc",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
