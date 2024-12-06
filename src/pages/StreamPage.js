@@ -1,11 +1,12 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit'; // Fixed the import for exit icon
 import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
 
 const StreamPage = () => {
     const location = useLocation();
@@ -14,6 +15,38 @@ const StreamPage = () => {
 
     const iframeRef = useRef(null);
     const [isFullScreen, setIsFullScreen] = React.useState(false);
+
+    const [instanceStatus, setInstanceStatus] = useState('INITIALIZING');
+    const [loading, setLoading] = useState(true);
+
+    const instanceId = localStorage.getItem('instanceId');
+
+    const fetchInstanceStatus = async () => {
+        try {
+            const response = await axios.get(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}`);
+            setInstanceStatus(response.data.status);
+        } catch (error) {
+            console.error("Error fetching instance status", error);
+            setInstanceStatus('ERROR');
+        }
+    };
+
+    useEffect(() => {
+        // Periodically check the instance status
+        const intervalId = setInterval(fetchInstanceStatus, 1000);
+        fetchInstanceStatus();
+
+        return () => clearInterval(intervalId);
+    }, [instanceId]);
+
+    useEffect(() => {
+        if (instanceStatus === 'RUNNING') {
+            setLoading(false);
+        } else if (instanceStatus === 'DEINITIALIZING' || instanceStatus === 'ERROR') {
+            localStorage.clear();
+            navigate('/');
+        }
+    }, [instanceStatus, navigate]);
 
     const handleFullScreenToggle = () => {
         const iframe = iframeRef.current;
@@ -45,7 +78,6 @@ const StreamPage = () => {
     };
 
     const handleTerminate = async () => {
-        const instanceId = localStorage.getItem('instanceId');
         try {
             await axios.put(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}/terminate`);
             localStorage.clear();
@@ -77,6 +109,27 @@ const StreamPage = () => {
             document.removeEventListener('msfullscreenchange', handleFullscreenChange);
         };
     }, []);
+
+    if (loading || instanceStatus === 'INITIALIZING') {
+        return (
+            <Box
+                sx={{
+                    width: '100vw',
+                    height: '100vh',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#000',
+                    color: '#fff',
+                }}
+            >
+                <CircularProgress color="inherit" />
+                <Typography variant="h6" sx={{ marginLeft: 2 }}>
+                    Initializing instance, please wait...
+                </Typography>
+            </Box>
+        );
+    }
 
     return (
         <Box
@@ -119,16 +172,18 @@ const StreamPage = () => {
                 </Typography>
             </Box>
 
-            <iframe
-                ref={iframeRef}
-                // src={`http://${selectedServer.serverIP}:${selectedServer.serverPort}/frontend/#/streaming`}
-                src="http://example.com"
-                // src="http://172.24.113.188:4690/frontend/#/streaming"
-                width="100%"
-                height="100%"
-                style={{ border: 'none', position: 'absolute', top: 0, left: 0 }}
-                title="OpenSpace"
-            />
+            {instanceStatus === 'RUNNING' && (
+                <iframe
+                    ref={iframeRef}
+                    // src={`http://${selectedServer.serverIP}:${selectedServer.serverPort}/frontend/#/streaming?id=0`}
+                    src="http://example.com"
+                    // src="http://172.24.113.188:4690/frontend/#/streaming"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 'none', position: 'absolute', top: 0, left: 0 }}
+                    title="OpenSpace"
+                />
+            )}
 
             <Button
                 variant="contained"

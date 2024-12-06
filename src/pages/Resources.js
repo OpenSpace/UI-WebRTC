@@ -79,7 +79,7 @@ export default function Resources() {
     const renderServerInstanceIcons = (server) => {
         const icons = [];
         const usedResources = server.Instances ?
-            server.Instances.filter(instance => instance.status !== 'TERMINATED') : [];
+            server.Instances.filter(instance => instance.status !== 'IDLE') : [];
 
         if (server.status === 'active') {
             // Add "Used Resource" icons
