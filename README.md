@@ -1,3 +1,48 @@
+
+# UI-WebRTC
+
+## Prerequisites
+- [Node.js](https://nodejs.org/) (v14+ recommended)
+- npm (v6+) 
+
+## Installation and Setup
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/OpenSpace/UI-WebRTC.git
+   ```
+
+Then, navigate into the project folder:
+
+```bash
+cd UI-WebRTC
+```
+
+2. **Create a .env file (if not already present) at the root of the project with the following content:**
+
+```bash
+REACT_APP_HOST="http://localhost"
+REACT_APP_API_PORT="5000"
+```
+You can adjust these values to match your environment if needed.
+
+3. **Install dependencies**
+
+```
+npm install
+```
+
+4. **Start the application**
+```
+npm start
+```
+
+5. **Access the web page**
+
+    Open your browser and navigate to http://localhost:3000.
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
@@ -68,3 +113,4 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
