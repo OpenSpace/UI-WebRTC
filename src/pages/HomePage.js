@@ -11,6 +11,7 @@ const HomePage = () => {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [sessionId, setSessionId] = useState(null);
     const [instanceId, setInstanceId] = useState(null);
+    const [processId, setProcessId] = useState(null);
     const [activeSession, setActiveSession] = useState(false);
     const [availableInstances, setAvailableInstances] = useState([]);
 
@@ -19,11 +20,13 @@ const HomePage = () => {
     useEffect(() => {
         const storedSessionId = localStorage.getItem('sessionId');
         const storedInstanceId = localStorage.getItem('instanceId');
+        const storedProcessId = localStorage.getItem('processId');
         const serverIP = localStorage.getItem('serverIP');
         const serverPort = localStorage.getItem('serverPort');
         if (storedSessionId && storedInstanceId && serverIP && serverPort) {
             setSessionId(storedSessionId);
             setInstanceId(storedInstanceId);
+            setProcessId(storedProcessId);
         } else {
             const newSessionId = uuidv4();
             setSessionId(newSessionId);
@@ -86,17 +89,20 @@ const HomePage = () => {
         setLoading(true);
         try {
             const session_id = getSessionId();
+            console.log("session_id: ", session_id);
             const response = await axios.post(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/servers/join`, {
                 session_id,
             });
 
             const data = response.data;
+            console.log("data: ", data);
 
             setInstanceId(data.instanceId);
             localStorage.setItem('serverIP', data.serverIP);
             localStorage.setItem('serverPort', data.serverPort);
             localStorage.setItem('instanceId', data.instanceId);
-            const selectedServer = { "serverIP": data.serverIP, "serverPort": data.serverPort };
+            localStorage.setItem('processId', data.processId);
+            const selectedServer = { "serverIP": data.serverIP, "serverPort": data.serverPort, "instanceId": data.instanceId, "processid": data.processId };
             navigate('/stream', { state: { selectedServer } });
         } catch (error) {
             console.error("Error joining server", error);
@@ -110,8 +116,9 @@ const HomePage = () => {
         const serverPort = localStorage.getItem('serverPort');
         const sessionId = localStorage.getItem('sessionId');
         const instanceId = localStorage.getItem('instanceId');
+        const processId = localStorage.getItem('processId');
         if (serverIP && serverPort && sessionId && instanceId) {
-            const selectedServer = { "serverIP": serverIP, "serverPort": serverPort };
+            const selectedServer = { "serverIP": serverIP, "serverPort": serverPort, "processid": processId };
             navigate('/stream', { state: { selectedServer } });
         }
     };

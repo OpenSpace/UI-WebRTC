@@ -175,7 +175,8 @@ const StreamPage = () => {
             {instanceStatus === 'RUNNING' && (
                 <iframe
                     ref={iframeRef}
-                    src="http://localhost:4690/frontend/#/streaming?id=0"
+                    // src="http://localhost:4690/frontend/#/streaming?id="
+                    src={`http://localhost:4690/frontend/#/streaming?id=`+selectedServer.processId}
                     width="100%"
                     height="100%"
                     style={{ border: 'none', position: 'absolute', top: 0, left: 0 }}

@@ -51,13 +51,13 @@ export default function Resources() {
                 session_id,
             });
 
-            const { serverIP, serverPort, sessionId, instanceId } = response.data;
+            const { serverIP, serverPort, sessionId, instanceId, processId } = response.data;
             localStorage.setItem('sessionId', sessionId);
             localStorage.setItem('serverIP', serverIP);
             localStorage.setItem('serverPort', serverPort);
-            localStorage.setItem('sessionId', sessionId);
+            localStorage.setItem('processId', processId);
             localStorage.setItem('instanceId', instanceId);
-            const selectedServer = { "serverIP": serverIP, "serverPort": serverPort };
+            const selectedServer = { "serverIP": serverIP, "serverPort": serverPort, "processId": processId };
             navigate('/stream', { state: { selectedServer } });
         } catch (error) {
             console.error("Error joining specific server", error);
