@@ -1,117 +1,97 @@
-import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import React, { useRef, useEffect, useState } from 'react';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
+import React, { useState, useEffect, useRef } from 'react';
+import { Box, Button, Typography } from '@mui/material';
+import { useParams, useNavigate } from 'react-router-dom';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
-import FullscreenExitIcon from '@mui/icons-material/FullscreenExit'; // Fixed the import for exit icon
-import Typography from '@mui/material/Typography';
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import axios from 'axios';
 import CircularProgress from '@mui/material/CircularProgress';
 
 const StreamPage = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const { selectedServer } = location.state || {};
-
+    const { instanceId } = useParams(); // Get instanceId from the route params
+    const [instanceStatus, setInstanceStatus] = useState(null);
+    const [selectedServer, setSelectedServer] = useState(null);
+    const [isFullScreen, setIsFullScreen] = useState(false);
     const iframeRef = useRef(null);
-    const [isFullScreen, setIsFullScreen] = React.useState(false);
+    const navigate = useNavigate();
 
-    const [instanceStatus, setInstanceStatus] = useState('INITIALIZING');
     const [loading, setLoading] = useState(true);
 
-    const instanceId = localStorage.getItem('instanceId');
-
-    const fetchInstanceStatus = async () => {
-        console.log("selectedServer: ", selectedServer.processId);
+    const fetchInstanceDetails = async () => {
         try {
-            const response = await axios.get(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}`);
-            setInstanceStatus(response.data.status);
+            const response = await axios.get(
+                `${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}`
+            );
+            const instance = response.data;
+            setInstanceStatus(instance.status);
+            setSelectedServer({
+                serverIP: instance.Server.ip_address,
+                processId: instance.process_id,
+            });
         } catch (error) {
-            console.error("Error fetching instance status", error);
-            setInstanceStatus('ERROR');
+            console.error('Error fetching instance details:', error);
         }
     };
 
     useEffect(() => {
         // Periodically check the instance status
-        const intervalId = setInterval(fetchInstanceStatus, 10000);
-        fetchInstanceStatus();
+        const intervalId = setInterval(fetchInstanceDetails, 10000);
+        fetchInstanceDetails();
 
         return () => clearInterval(intervalId);
     }, [instanceId]);
-
-    useEffect(() => {
-        if (instanceStatus === 'RUNNING') {
-            setLoading(false);
-        } else if (instanceStatus === 'DEINITIALIZING' || instanceStatus === 'ERROR') {
-            localStorage.clear();
-            navigate('/');
-        }
-    }, [instanceStatus, navigate]);
-
-    const handleFullScreenToggle = () => {
-        const iframe = iframeRef.current;
-
-        if (!isFullScreen) {
-            if (iframe.requestFullscreen) {
-                iframe.requestFullscreen();
-            } else if (iframe.mozRequestFullScreen) { // Firefox
-                iframe.mozRequestFullScreen();
-            } else if (iframe.webkitRequestFullscreen) { // Chrome, Safari and Opera
-                iframe.webkitRequestFullscreen();
-            } else if (iframe.msRequestFullscreen) { // IE/Edge
-                iframe.msRequestFullscreen();
-            }
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.mozCancelFullScreen) { // Firefox
-                document.mozCancelFullScreen();
-            } else if (document.webkitExitFullscreen) { // Chrome, Safari and Opera
-                document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) { // IE/Edge
-                document.msExitFullscreen();
-            }
-        }
-
-        // Toggle fullscreen state
-        setIsFullScreen((prev) => !prev);
-    };
-
-    const handleTerminate = async () => {
-        try {
-            await axios.put(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}/terminate`);
-            localStorage.clear();
-            navigate('/');
-        } catch (error) {
-            console.error("Error exiting instance", error);
-        }
-    };
 
     const handleHome = () => {
         navigate('/');
     };
 
-    // Listen for fullscreen change events
+    const handleTerminate = async () => {
+        let isIdle = false;
+        try {
+            setLoading(true);
+            await axios.put(
+                `${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}/terminate`
+            );
+
+            // Poll the instance status until it becomes "IDLE"
+            while (!isIdle) {
+                const response = await axios.get(
+                    `${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}`
+                );
+
+                const { status } = response.data;
+                if (status === 'IDLE') {
+                    isIdle = true;
+                } else {
+                    // Wait for a short interval before the next check
+                    await new Promise((resolve) => setTimeout(resolve, 2000));
+                }
+            }
+            setLoading(false);
+            handleHome();
+        } catch (error) {
+            console.error('Error terminating the instance:', error);
+        }
+    };
+
     useEffect(() => {
-        const handleFullscreenChange = () => {
-            setIsFullScreen(!!document.fullscreenElement);
-        };
+        if (instanceStatus === 'RUNNING') {
+            setLoading(false);
+        } else if (instanceStatus === 'DEINITIALIZING' || instanceStatus === 'ERROR') {
+            handleHome();
+        }
+    }, [instanceStatus, navigate]);
 
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+    const handleFullScreenToggle = () => {
+        if (!isFullScreen) {
+            iframeRef.current.requestFullscreen?.();
+        } else {
+            document.exitFullscreen?.();
+        }
+        setIsFullScreen(!isFullScreen);
+    };
 
-        return () => {
-            document.removeEventListener('fullscreenchange', handleFullscreenChange);
-            document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-            document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-            document.removeEventListener('msfullscreenchange', handleFullscreenChange);
-        };
-    }, []);
-
-    if (loading || instanceStatus === 'INITIALIZING') {
+    // DEINITIALIZING the instance
+    if (loading) {
         return (
             <Box
                 sx={{
@@ -122,15 +102,18 @@ const StreamPage = () => {
                     alignItems: 'center',
                     backgroundColor: '#000',
                     color: '#fff',
+                    flexDirection: 'column',
                 }}
             >
                 <CircularProgress color="inherit" />
-                <Typography variant="h6" sx={{ marginLeft: 2 }}>
-                    Initializing instance, please wait...
+                <Typography variant="h6" sx={{ marginTop: 2 }}>
+                    {instanceStatus === 'INITIALIZING' && 'Initializing instance, please wait...'}
+                    {instanceStatus === 'RUNNING' && 'Terminating instance, please wait...'}
+                    {!instanceStatus && 'Processing, please wait...'}
                 </Typography>
             </Box>
         );
-    }
+    }    
 
     return (
         <Box
@@ -139,7 +122,7 @@ const StreamPage = () => {
                 height: '100vh',
                 position: 'relative',
                 color: '#c2c2c2',
-                overflow: 'hidden'
+                overflow: 'hidden',
             }}
         >
             <Box
@@ -149,7 +132,7 @@ const StreamPage = () => {
                     left: 16,
                     zIndex: 1000,
                     display: 'flex',
-                    gap: 2
+                    gap: 2,
                 }}
             >
                 <Button variant="contained" onClick={handleHome}>
@@ -158,27 +141,27 @@ const StreamPage = () => {
                 <Button variant="contained" color="error" onClick={handleTerminate}>
                     Terminate
                 </Button>
-                <Typography
-                    sx={{
-                        top: 16,
-                        right: 100,
-                        zIndex: 1000,
-                        color: 'white',
-                        fontSize: '1.2rem',
-                        backgroundColor: '#1976d2',
-                        padding: '8px 16px',
-                    }}
-                >
-                    Selected Server: {selectedServer.serverIP}:{selectedServer.serverPort}:{selectedServer.processId}
-                </Typography>
+                {selectedServer && (
+                    <Typography
+                        sx={{
+                            top: 16,
+                            right: 100,
+                            zIndex: 1000,
+                            color: 'white',
+                            fontSize: '1.2rem',
+                            backgroundColor: '#1976d2',
+                            padding: '8px 16px',
+                        }}
+                    >
+                        Streaming: {`http://${selectedServer.serverIP}:4690/frontend/#/streaming?id=${selectedServer.processId}`}
+                    </Typography>
+                )}
             </Box>
 
-            {instanceStatus === 'RUNNING' && (
+            {instanceStatus === 'RUNNING' && selectedServer && (
                 <iframe
                     ref={iframeRef}
-                    // src="http://localhost:4690/frontend/#/streaming?id="
-                    // src={`http://localhost:4690/frontend/#/streaming?id=`+selectedServer.processId}
-                    src={`http://localhost:4690/frontend/#/streaming?id=${selectedServer.processId}`}
+                    src={`http://${selectedServer.serverIP}:4690/frontend/#/streaming?id=${selectedServer.processId}`}
                     width="100%"
                     height="100%"
                     style={{ border: 'none', position: 'absolute', top: 0, left: 0 }}
@@ -193,7 +176,7 @@ const StreamPage = () => {
                     position: 'absolute',
                     top: 20,
                     right: 20,
-                    zIndex: 1000
+                    zIndex: 1000,
                 }}
             >
                 {isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
