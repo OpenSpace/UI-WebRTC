@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -9,9 +9,7 @@ import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import CoPresentRoundedIcon from '@mui/icons-material/CoPresentRounded';
 import PersonalVideoOutlinedIcon from '@mui/icons-material/PersonalVideoOutlined';
-import Typography from '@mui/material/Typography';
 import { useNavigate } from 'react-router-dom'; // For navigation to OpenSpace view
-import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import Box from '@mui/material/Box';
 
@@ -46,19 +44,12 @@ export default function Resources() {
 
     const handleJoinServer = async (serverId) => {
         try {
-            const session_id = uuidv4();
+            const session_id = localStorage.getItem('session_id');
             const response = await axios.post(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/servers/join/${serverId}`, {
                 session_id,
             });
-
-            const { serverIP, serverPort, sessionId, instanceId, processId } = response.data;
-            localStorage.setItem('sessionId', sessionId);
-            localStorage.setItem('serverIP', serverIP);
-            localStorage.setItem('serverPort', serverPort);
-            localStorage.setItem('processId', processId);
-            localStorage.setItem('instanceId', instanceId);
-            const selectedServer = { "serverIP": serverIP, "serverPort": serverPort, "processId": processId };
-            navigate('/stream', { state: { selectedServer } });
+            const { instanceId } = response.data;
+            navigate(`/stream/${instanceId}`);
         } catch (error) {
             console.error("Error joining specific server", error);
         }
@@ -77,6 +68,7 @@ export default function Resources() {
     }
 
     const renderServerInstanceIcons = (server) => {
+        console.log(server)
         const icons = [];
         const usedResources = server.Instances ?
             server.Instances.filter(instance => instance.status !== 'IDLE') : [];

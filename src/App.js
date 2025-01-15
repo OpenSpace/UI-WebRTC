@@ -8,7 +8,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/stream" element={<StreamPage />} />
+        <Route path="/stream/:instanceId" element={<StreamPage />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

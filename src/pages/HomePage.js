@@ -10,52 +10,25 @@ const HomePage = () => {
     const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [sessionId, setSessionId] = useState(null);
-    const [instanceId, setInstanceId] = useState(null);
-    const [processId, setProcessId] = useState(null);
-    const [activeSession, setActiveSession] = useState(false);
+    const [activeUserInstances, setActiveUserInstances] = useState([]);
     const [availableInstances, setAvailableInstances] = useState([]);
 
     const navigate = useNavigate();
 
+    // set session id
     useEffect(() => {
-        const storedSessionId = localStorage.getItem('sessionId');
-        const storedInstanceId = localStorage.getItem('instanceId');
-        const storedProcessId = localStorage.getItem('processId');
-        const serverIP = localStorage.getItem('serverIP');
-        const serverPort = localStorage.getItem('serverPort');
-        if (storedSessionId && storedInstanceId && serverIP && serverPort) {
+        const storedSessionId = localStorage.getItem('session_id');
+        if (storedSessionId) {
             setSessionId(storedSessionId);
-            setInstanceId(storedInstanceId);
-            setProcessId(storedProcessId);
+            fetchInstances(storedSessionId);
         } else {
             const newSessionId = uuidv4();
             setSessionId(newSessionId);
-            localStorage.setItem('sessionId', newSessionId);
+            localStorage.setItem('session_id', newSessionId);
         }
     }, []);
 
-    useEffect(() => {
-        // check if the instance is in INITIALIZING or RUNNING state
-        const checkInstanceStatus = async () => {
-            try {
-                const response = await axios.get(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}`);
-                const status = response.data.status;
-                if (status === 'INITIALIZING' || status === 'RUNNING') {
-                    setActiveSession(true);
-                } else {
-                    setActiveSession(false);
-                    localStorage.clear();
-                }
-            } catch (error) {
-                console.error("Error checking instance status", error);
-            }
-        }
-
-        if (instanceId) {
-            checkInstanceStatus();
-        }
-    }, [instanceId, navigate]);
-
+    // get server info
     useEffect(() => {
         const getServerInfo = async () => {
             try {
@@ -69,41 +42,40 @@ const HomePage = () => {
 
         getServerInfo();
 
-        // Set an interval to call getServerInfo every 5 seconds
-        const intervalId = setInterval(getServerInfo, 5000);
+        // Set an interval to call getServerInfo every 10 seconds
+        const intervalId = setInterval(getServerInfo, 10000);
 
-        // Cleanup the interval on component unmount
         return () => clearInterval(intervalId);
     }, []);
 
-    const getSessionId = () => {
-        const session_id = sessionId || localStorage.getItem('sessionId');
-        if (!session_id) {
-            throw new Error("No session ID found");
+    //fetch instances related to given session id
+    const fetchInstances = async (sessionId) => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/sessions/${sessionId}`);
+            setActiveUserInstances(response.data);
+        } catch (error) {
+            console.error('Error fetching instances:', error);
+        } finally {
+            setLoading(false);
         }
+    };
 
-        return session_id;
-    }
+    const handleJoinInstance = (instanceId) => {
+        navigate(`/stream/${instanceId}`);
+    };
 
     const handleJoin = async () => {
         setLoading(true);
         try {
-            const session_id = getSessionId();
-            console.log("session_id: ", session_id);
             const response = await axios.post(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/servers/join`, {
-                session_id,
+                session_id: sessionId,
             });
 
             const data = response.data;
-            console.log("data: ", data);
 
-            setInstanceId(data.instanceId);
-            localStorage.setItem('serverIP', data.serverIP);
-            localStorage.setItem('serverPort', data.serverPort);
-            localStorage.setItem('instanceId', data.instanceId);
-            localStorage.setItem('processId', data.processId);
-            const selectedServer = { "serverIP": data.serverIP, "serverPort": data.serverPort, "instanceId": data.instanceId, "processId": data.processId };
-            navigate('/stream', { state: { selectedServer } });
+            const instanceId = data.instanceId
+            navigate(`/stream/${instanceId}`);
         } catch (error) {
             console.error("Error joining server", error);
         } finally {
@@ -111,30 +83,23 @@ const HomePage = () => {
         }
     };
 
-    const handleRejoin = () => {
-        const serverIP = localStorage.getItem('serverIP');
-        const serverPort = localStorage.getItem('serverPort');
-        const sessionId = localStorage.getItem('sessionId');
-        const instanceId = localStorage.getItem('instanceId');
-        const processId = localStorage.getItem('processId');
-        if (serverIP && serverPort && sessionId && instanceId) {
-            const selectedServer = { "serverIP": serverIP, "serverPort": serverPort, "processId": processId };
-            navigate('/stream', { state: { selectedServer } });
-        }
-    };
-
     return (
-        <div style={{
-            backgroundImage: `url(${require('../assets/web_background.png')})`,
-            backgroundSize: 'cover',
-            height: '100vh',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexDirection: 'column'
-        }}>
-            {/* add logo */}
-            <img src={require('../assets/logo.png')} alt="logo" style={{ width: '30%', height: 'auto' }} />
+        <div
+            style={{
+                backgroundImage: `url(${require('../assets/web_background.png')})`,
+                backgroundSize: 'cover',
+                height: '100vh',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexDirection: 'column',
+            }}
+        >
+            <img
+                src={require('../assets/logo.png')}
+                alt="logo"
+                style={{ width: '30%', height: 'auto' }}
+            />
             <Typography
                 variant="h4"
                 gutterBottom
@@ -143,46 +108,63 @@ const HomePage = () => {
                 Welcome to OpenSpace WebRTC!
             </Typography>
 
-            {activeSession ?
-                (
-                    <div style={{ textAlign: 'center', margin: '20px' }}>
-                        <Typography
-                            variant="h5"
-                            gutterBottom
-                            sx={{ color: '#c2c2c2' }}
-                        >
-                            Hey, You have an existing running instance!
-                        </Typography>
+            {loading ? (
+                <CircularProgress />
+            ) : activeUserInstances.length > 0 ? (
+                <div style={{ textAlign: 'center' }}>
+                    <Typography
+                        variant="h5"
+                        gutterBottom
+                        sx={{ color: '#c2c2c2' }}
+                    >
+                        Select an Instance to Join:
+                    </Typography>
+                    <ul>
+                        {activeUserInstances.map((instance) => (
+                            <li key={instance.instance_id} style={{ margin: '10px 0' }}>
+                                <Typography style={{
+                                        color: 'white'
+                                    }}>
+                                    <strong>Instance ID:</strong> {instance.instance_id} |{' '}
+                                    <strong>Status:</strong> {instance.status}
+                                </Typography>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => handleJoinInstance(instance.instance_id)}
+                                    style={{
+                                        marginTop: '5px',
+                                        padding: '8px 16px',
+                                        fontSize: '16px',
+                                    }}
+                                >
+                                    Join Instance
+                                </Button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            ) : (
+                <Button variant="contained" color="primary" onClick={handleJoin} disabled={loading}
+                    style={{
+                        marginTop: '10px',
+                        padding: '12px 24px',
+                        fontSize: '18px'
+                    }}>
+                    {loading ? <CircularProgress size={24} /> : (availableInstances > 0 ? "Join" : "No available servers to join")}
+                </Button>
+            )}
 
-                        <Button variant="contained" color="secondary" onClick={handleRejoin}
-                            style={{
-                                marginTop: '10px',
-                                padding: '12px 24px',
-                                fontSize: '18px'
-                            }}>
-                            Click here to ReJoin
-                        </Button>
-                    </div>
-                )
-                :
-                (
-                    <Button variant="contained" color="primary" onClick={handleJoin} disabled={loading}
-                        style={{
-                            marginTop: '10px',
-                            padding: '12px 24px',
-                            fontSize: '18px'
-                        }}>
-                        {loading ? <CircularProgress size={24} /> : (availableInstances > 0 ? "Join" : "No available servers to join")}
-                    </Button>
-                )
-            }
-
-            <Button variant="contained" color="info" onClick={() => setDialogOpen(true)}
+            <Button
+                variant="contained"
+                color="info"
+                onClick={() => setDialogOpen(true)}
                 style={{
                     marginTop: '70px',
                     padding: '12px 24px',
-                    fontSize: '18px'
-                }}>
+                    fontSize: '18px',
+                }}
+            >
                 Custom Resources
             </Button>
 
@@ -203,28 +185,6 @@ const HomePage = () => {
                 <DialogContent>
                     <Resources />
                 </DialogContent>
-
-                {/* <DialogContent>
-                    {servers.length ? (
-                        servers.map(server => (
-                            <>
-                                {console.log(server.server_id)}
-                                <div key={server.server_id} style={{ marginBottom: '10px' }}>
-                                    <Typography>{server.name} (Status: {server.status})</Typography>
-                                    <Button
-                                        variant="contained"
-                                        onClick={() => handleJoinServer(server.server_id)}
-                                        disabled={server.status !== 'active'}
-                                    >
-                                        Join
-                                    </Button>
-                                </div>
-                            </>
-                        ))
-                    ) : (
-                        <Typography>No servers available</Typography>
-                    )}
-                </DialogContent> */}
             </Dialog>
         </div>
     );
