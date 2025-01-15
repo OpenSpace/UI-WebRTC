@@ -22,6 +22,7 @@ const StreamPage = () => {
     const instanceId = localStorage.getItem('instanceId');
 
     const fetchInstanceStatus = async () => {
+        console.log("selectedServer: ", selectedServer.processId);
         try {
             const response = await axios.get(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}`);
             setInstanceStatus(response.data.status);
@@ -33,7 +34,7 @@ const StreamPage = () => {
 
     useEffect(() => {
         // Periodically check the instance status
-        const intervalId = setInterval(fetchInstanceStatus, 1000);
+        const intervalId = setInterval(fetchInstanceStatus, 10000);
         fetchInstanceStatus();
 
         return () => clearInterval(intervalId);
@@ -168,7 +169,7 @@ const StreamPage = () => {
                         padding: '8px 16px',
                     }}
                 >
-                    Selected Server: {selectedServer.serverIP}:{selectedServer.serverPort}
+                    Selected Server: {selectedServer.serverIP}:{selectedServer.serverPort}:{selectedServer.processId}
                 </Typography>
             </Box>
 
@@ -176,7 +177,8 @@ const StreamPage = () => {
                 <iframe
                     ref={iframeRef}
                     // src="http://localhost:4690/frontend/#/streaming?id="
-                    src={`http://localhost:4690/frontend/#/streaming?id=`+selectedServer.processId}
+                    // src={`http://localhost:4690/frontend/#/streaming?id=`+selectedServer.processId}
+                    src={`http://localhost:4690/frontend/#/streaming?id=${selectedServer.processId}`}
                     width="100%"
                     height="100%"
                     style={{ border: 'none', position: 'absolute', top: 0, left: 0 }}

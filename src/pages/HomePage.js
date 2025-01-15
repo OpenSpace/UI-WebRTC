@@ -102,7 +102,7 @@ const HomePage = () => {
             localStorage.setItem('serverPort', data.serverPort);
             localStorage.setItem('instanceId', data.instanceId);
             localStorage.setItem('processId', data.processId);
-            const selectedServer = { "serverIP": data.serverIP, "serverPort": data.serverPort, "instanceId": data.instanceId, "processid": data.processId };
+            const selectedServer = { "serverIP": data.serverIP, "serverPort": data.serverPort, "instanceId": data.instanceId, "processId": data.processId };
             navigate('/stream', { state: { selectedServer } });
         } catch (error) {
             console.error("Error joining server", error);
@@ -118,7 +118,7 @@ const HomePage = () => {
         const instanceId = localStorage.getItem('instanceId');
         const processId = localStorage.getItem('processId');
         if (serverIP && serverPort && sessionId && instanceId) {
-            const selectedServer = { "serverIP": serverIP, "serverPort": serverPort, "processid": processId };
+            const selectedServer = { "serverIP": serverIP, "serverPort": serverPort, "processId": processId };
             navigate('/stream', { state: { selectedServer } });
         }
     };
