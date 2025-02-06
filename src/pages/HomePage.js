@@ -65,6 +65,39 @@ const HomePage = () => {
         navigate(`/stream/${instanceId}`);
     };
 
+    const [loadingInstances, setLoadingInstances] = useState({});
+
+    const handleTerminateInstance = async (instanceId) => {
+        setLoadingInstances((prev) => ({ ...prev, [instanceId]: true }));
+
+        try {
+            await axios.put(
+                `${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}/terminate`
+            );
+
+            let isIdle = false;
+            while (!isIdle) {
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before polling again
+                
+                const response = await axios.get(
+                    `${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}`
+                );
+
+                const { status } = response.data;
+                if (status === 'IDLE') {
+                    isIdle = true;
+                }
+            }
+
+            // Refresh instances after termination is complete
+            fetchInstances(sessionId);
+        } catch (error) {
+            console.error('Error terminating instance:', error);
+        } finally {
+            setLoadingInstances((prev) => ({ ...prev, [instanceId]: false }));
+        }
+    };
+
     const handleJoin = async () => {
         setLoading(true);
         try {
@@ -117,11 +150,11 @@ const HomePage = () => {
                         gutterBottom
                         sx={{ color: '#c2c2c2' }}
                     >
-                        Select an Instance to Join:
+                        Join your existing instance:
                     </Typography>
                     <ul>
                         {activeUserInstances.map((instance) => (
-                            <li key={instance.instance_id} style={{ margin: '10px 0' }}>
+                            <li key={instance.instance_id} style={{ margin: '10px 0',  padding: '10px', background: 'gray' }}>
                                 <Typography style={{
                                         color: 'white'
                                     }}>
@@ -139,6 +172,25 @@ const HomePage = () => {
                                     }}
                                 >
                                     Join Instance
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    color="secondary"
+                                    onClick={() => handleTerminateInstance(instance.instance_id)}
+                                    style={{
+                                        marginTop: '5px',
+                                        padding: '8px 16px',
+                                        fontSize: '16px',
+                                        marginLeft: '10px'
+                                    }}
+                                    disabled={loadingInstances[instance.instance_id]}
+                                >
+                                    {loadingInstances[instance.instance_id] ? (
+                                        <>
+                                            <CircularProgress size={20} color="secondary" style={{ marginRight: '8px' }} />
+                                            Terminating...
+                                        </>
+                                    ) : "Terminate"}
                                 </Button>
                             </li>
                         ))}
