@@ -32,7 +32,7 @@ const HomePage = () => {
     useEffect(() => {
         const getServerInfo = async () => {
             try {
-                const response = await axios.get(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/servers/info`);
+                const response = await axios.get(`${process.env.REACT_APP_HOST}/servers/info`);
                 const data = response.data;
                 setAvailableInstances(data.availableInstances);
             } catch (error) {
@@ -52,10 +52,15 @@ const HomePage = () => {
     const fetchInstances = async (sessionId) => {
         setLoading(true);
         try {
-            const response = await axios.get(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/sessions/${sessionId}`);
-            setActiveUserInstances(response.data);
+            const response = await axios.get(`${process.env.REACT_APP_HOST}/instances/sessions/${sessionId}`);
+            console.log('Response data:', response.data);
+            console.log('Response data type:', typeof response.data);
+            console.log('Is array?', Array.isArray(response.data));
+            // Ensure we're setting an array
+            setActiveUserInstances(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error('Error fetching instances:', error);
+            setActiveUserInstances([]); // Set empty array on error
         } finally {
             setLoading(false);
         }
@@ -72,7 +77,7 @@ const HomePage = () => {
 
         try {
             await axios.put(
-                `${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}/terminate`
+                `${process.env.REACT_APP_HOST}/instances/${instanceId}/terminate`
             );
 
             let isIdle = false;
@@ -80,7 +85,7 @@ const HomePage = () => {
                 await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before polling again
                 
                 const response = await axios.get(
-                    `${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}`
+                    `${process.env.REACT_APP_HOST}/instances/${instanceId}`
                 );
 
                 const { status } = response.data;
@@ -101,7 +106,7 @@ const HomePage = () => {
     const handleJoin = async () => {
         setLoading(true);
         try {
-            const response = await axios.post(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/servers/join`, {
+            const response = await axios.post(`${process.env.REACT_APP_HOST}/servers/join`, {
                 session_id: sessionId,
             });
 
