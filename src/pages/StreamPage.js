@@ -15,11 +15,14 @@ const StreamPage = () => {
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
+    const isSecure = process.env.REACT_APP_IS_SECURE === "true";
+    const host = isSecure ? process.env.REACT_APP_HOST_SECURE : process.env.REACT_APP_HOST_NON_SECURE;
+
 
     const fetchInstanceDetails = async () => {
         try {
-            const response = await axios.get(
-                `${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}`
+            const response = await axios.get(`
+                ${process.env.REACT_APP_HOST_LIVE}/instances/${instanceId}`
             );
             const instance = response.data;
             setInstanceStatus(instance.status);
@@ -48,14 +51,14 @@ const StreamPage = () => {
         let isIdle = false;
         try {
             setLoading(true);
-            await axios.put(
-                `${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}/terminate`
+            await axios.put(`
+                ${process.env.REACT_APP_HOST_LIVE}/instances/${instanceId}/terminate`
             );
 
             // Poll the instance status until it becomes "IDLE"
             while (!isIdle) {
-                const response = await axios.get(
-                    `${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/instances/${instanceId}`
+                const response = await axios.get(`
+                    ${process.env.REACT_APP_HOST_LIVE}/instances/${instanceId}`
                 );
 
                 const { status } = response.data;
@@ -141,27 +144,12 @@ const StreamPage = () => {
                 <Button variant="contained" color="error" onClick={handleTerminate}>
                     Terminate
                 </Button>
-                {selectedServer && (
-                    <Typography
-                        sx={{
-                            top: 16,
-                            right: 100,
-                            zIndex: 1000,
-                            color: 'white',
-                            fontSize: '1.2rem',
-                            backgroundColor: '#1976d2',
-                            padding: '8px 16px',
-                        }}
-                    >
-                        Streaming: {`http://${selectedServer.serverIP}:4690/frontend/#/streaming?id=${selectedServer.processId}`}
-                    </Typography>
-                )}
             </Box>
 
             {instanceStatus === 'RUNNING' && selectedServer && (
                 <iframe
                     ref={iframeRef}
-                    src={`http://${selectedServer.serverIP}:4690/frontend/#/streaming?id=${selectedServer.processId}`}
+                    src={`${host}/frontend/#/streaming?id=${selectedServer.processId}`}
                     width="100%"
                     height="100%"
                     style={{ border: 'none', position: 'absolute', top: 0, left: 0 }}
@@ -181,6 +169,22 @@ const StreamPage = () => {
             >
                 {isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
             </Button>
+
+            {selectedServer && (
+                <Typography
+                    sx={{
+                        top: 16,
+                        right: 100,
+                        zIndex: 1000,
+                        color: 'white',
+                        fontSize: '1.2rem',
+                        backgroundColor: '#1976d2',
+                        padding: '8px 16px',
+                    }}
+                >
+                    Streaming: {`${host}/frontend/#/streaming?id=${selectedServer.processId}`}
+                </Typography>
+            )}
         </Box>
     );
 };

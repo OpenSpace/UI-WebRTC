@@ -23,8 +23,8 @@ export default function Resources() {
     useEffect(() => {
         const fetchServers = async () => {
             try {
-                console.log("Fetching servers...", `${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/servers`);
-                const resp = await axios.get(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/servers`);
+                console.log("Fetching servers...", `${process.env.REACT_APP_HOST}/servers/`);
+                const resp = await axios.get(`${process.env.REACT_APP_HOST}/servers/`);
                 const data = resp.data;
 
                 // Separate servers into active and inactive
@@ -45,7 +45,7 @@ export default function Resources() {
     const handleJoinServer = async (serverId) => {
         try {
             const session_id = localStorage.getItem('session_id');
-            const response = await axios.post(`${process.env.REACT_APP_HOST}:${process.env.REACT_APP_API_PORT}/servers/join/${serverId}`, {
+            const response = await axios.post(`${process.env.REACT_APP_HOST}/servers/join/${serverId}`, {
                 session_id,
             });
             const { instanceId } = response.data;
